@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_animate/flutter_animate.dart';
 import '../../screens/tool_detail_screen.dart';
 import '../../models/tool_model.dart';
 import '../../widgets/input_field.dart';
@@ -31,32 +30,48 @@ class _SqlFormatterToolState extends State<SqlFormatterTool> {
     final input = _inputController.text.trim();
     if (input.isEmpty) return;
 
+    // Keywords ordered by length (longest first) to avoid partial matches
     final keywords = [
-      'SELECT',
-      'FROM',
-      'WHERE',
-      'JOIN',
-      'LEFT JOIN',
-      'RIGHT JOIN',
+      'LEFT OUTER JOIN',
+      'RIGHT OUTER JOIN',
+      'FULL OUTER JOIN',
+      'CROSS JOIN',
       'INNER JOIN',
-      'ON',
-      'AND',
-      'OR',
+      'RIGHT JOIN',
+      'LEFT JOIN',
       'ORDER BY',
       'GROUP BY',
+      'DISTINCT',
+      'BETWEEN',
+      'SELECT',
+      'INSERT',
+      'UPDATE',
+      'DELETE',
       'HAVING',
+      'VALUES',
+      'WHERE',
       'LIMIT',
+      'FROM',
+      'JOIN',
+      'INTO',
+      'SET',
+      'AND',
+      'OR',
+      'ON',
     ];
 
     String result = input;
     for (final keyword in keywords) {
-      result = result.replaceAll(
-        RegExp(keyword, caseSensitive: false),
-        '\n$keyword',
+      // Use word boundaries to avoid matching partial words like "ANDROID"
+      result = result.replaceAllMapped(
+        RegExp('\\b$keyword\\b', caseSensitive: false),
+        (match) => '\n${keyword.toUpperCase()}',
       );
     }
 
     result = result.replaceAll(',', ',\n  ').trim();
+    // Remove leading newline if present
+    if (result.startsWith('\n')) result = result.substring(1);
 
     setState(() {
       _outputController.text = result;

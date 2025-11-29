@@ -21,6 +21,9 @@ class _RegexTesterToolState extends State<RegexTesterTool> {
   final TextEditingController _testController = TextEditingController();
   List<RegExpMatch> _matches = [];
   String _errorMessage = '';
+  bool _caseSensitive = true;
+  bool _multiLine = false;
+  bool _dotAll = false;
 
   @override
   void dispose() {
@@ -38,11 +41,16 @@ class _RegexTesterToolState extends State<RegexTesterTool> {
         final test = _testController.text;
         if (pattern.isEmpty || test.isEmpty) return;
 
-        final regex = RegExp(pattern);
+        final regex = RegExp(
+          pattern,
+          caseSensitive: _caseSensitive,
+          multiLine: _multiLine,
+          dotAll: _dotAll,
+        );
         _matches = regex.allMatches(test).toList();
         HapticFeedback.mediumImpact();
       } catch (e) {
-        _errorMessage = 'Invalid regex pattern';
+        _errorMessage = 'Invalid regex pattern: ${e.toString().replaceAll('FormatException: ', '')}';
       }
     });
   }
@@ -60,6 +68,8 @@ class _RegexTesterToolState extends State<RegexTesterTool> {
             controller: _patternController,
             maxLines: 2,
           ),
+          const SizedBox(height: 12),
+          _buildFlags(),
           const SizedBox(height: 16),
           InputField(
             label: 'Test String',
@@ -77,9 +87,62 @@ class _RegexTesterToolState extends State<RegexTesterTool> {
           const SizedBox(height: 16),
           if (_errorMessage.isNotEmpty) _buildErrorMessage(),
           if (_matches.isNotEmpty) _buildMatches(),
+          if (_matches.isEmpty && _errorMessage.isEmpty && _patternController.text.isNotEmpty && _testController.text.isNotEmpty)
+            _buildNoMatches(),
         ],
       ),
     );
+  }
+
+  Widget _buildFlags() {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: AppTheme.surfaceColor,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Wrap(
+        spacing: 16,
+        runSpacing: 8,
+        children: [
+          _buildFlagChip('Case Sensitive', _caseSensitive, (v) => setState(() => _caseSensitive = v)),
+          _buildFlagChip('Multi-line (^/\$)', _multiLine, (v) => setState(() => _multiLine = v)),
+          _buildFlagChip('Dot matches all', _dotAll, (v) => setState(() => _dotAll = v)),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildFlagChip(String label, bool value, void Function(bool) onChanged) {
+    return FilterChip(
+      label: Text(label, style: const TextStyle(fontSize: 12)),
+      selected: value,
+      onSelected: onChanged,
+      selectedColor: AppTheme.primaryColor.withOpacity(0.3),
+      checkmarkColor: AppTheme.primaryColor,
+      backgroundColor: Colors.white.withOpacity(0.05),
+      side: BorderSide(
+        color: value ? AppTheme.primaryColor : Colors.white24,
+      ),
+    );
+  }
+
+  Widget _buildNoMatches() {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.orange.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.orange.withOpacity(0.3)),
+      ),
+      child: const Row(
+        children: [
+          Icon(Icons.info_outline, color: Colors.orange, size: 20),
+          SizedBox(width: 12),
+          Text('No matches found', style: TextStyle(color: Colors.orange)),
+        ],
+      ),
+    ).animate().fadeIn();
   }
 
   Widget _buildErrorMessage() {

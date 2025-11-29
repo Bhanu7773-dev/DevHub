@@ -32,17 +32,39 @@ class _EmailValidatorToolState extends State<EmailValidatorTool> {
     final email = _inputController.text.trim();
     if (email.isEmpty) return;
 
-    // Basic regex for email validation
-    final emailRegex = RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$');
+    // More comprehensive email regex that handles:
+    // - Plus addressing (user+tag@domain.com)
+    // - Longer TLDs (.technology, .company, etc.)
+    // - Subdomains (user@mail.example.com)
+    final emailRegex = RegExp(
+      r'^[a-zA-Z0-9.!#$%&*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)+$',
+    );
     _isValid = emailRegex.hasMatch(email);
 
-    String result = 'Status: ${_isValid ? "Valid" : "Invalid"}\n\n';
+    String result = 'Status: ${_isValid ? "Valid ✓" : "Invalid ✗"}\n\n';
     if (_isValid) {
       final parts = email.split('@');
-      result += 'Username: ${parts[0]}\n';
-      result += 'Domain: ${parts[1]}';
+      final username = parts[0];
+      final domain = parts[1];
+      result += 'Username: $username\n';
+      result += 'Domain: $domain\n';
+      
+      // Additional info
+      if (username.contains('+')) {
+        result += '\nNote: Contains plus addressing (alias)';
+      }
     } else {
-      result += 'Reason: The email format is incorrect.';
+      // Provide specific feedback
+      final List<String> issues = [];
+      if (!email.contains('@')) {
+        issues.add('Missing @ symbol');
+      } else {
+        final parts = email.split('@');
+        if (parts[0].isEmpty) issues.add('Missing username before @');
+        if (parts.length > 1 && parts[1].isEmpty) issues.add('Missing domain after @');
+        if (parts.length > 1 && !parts[1].contains('.')) issues.add('Domain missing extension (.com, .org, etc.)');
+      }
+      result += 'Issues:\n${issues.map((i) => '• $i').join('\n')}';
     }
 
     setState(() {

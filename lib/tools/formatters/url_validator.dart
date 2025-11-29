@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_animate/flutter_animate.dart';
 import '../../screens/tool_detail_screen.dart';
 import '../../models/tool_model.dart';
 import '../../widgets/input_field.dart';
@@ -33,14 +32,38 @@ class _UrlValidatorToolState extends State<UrlValidatorTool> {
 
     try {
       final uri = Uri.parse(urlString);
+      
+      // Validate required components
+      final validSchemes = ['http', 'https', 'ftp', 'ftps', 'mailto', 'file'];
+      final List<String> issues = [];
+      
       if (!uri.hasScheme) {
-        throw FormatException('Missing scheme');
+        issues.add('Missing scheme (e.g., https://)');
+      } else if (!validSchemes.contains(uri.scheme.toLowerCase())) {
+        issues.add('Unknown scheme: ${uri.scheme}');
+      }
+      
+      if (uri.host.isEmpty && !['mailto', 'file'].contains(uri.scheme)) {
+        issues.add('Missing host/domain');
+      }
+      
+      // Check for common URL patterns
+      if (uri.host.isNotEmpty && !uri.host.contains('.') && uri.host != 'localhost') {
+        issues.add('Host may be invalid (no domain extension)');
       }
 
-      String result = 'Status: Valid\n\n';
+      if (issues.isNotEmpty) {
+        setState(() {
+          _outputController.text = 'Status: Invalid\n\nIssues:\n${issues.map((i) => '• $i').join('\n')}';
+          HapticFeedback.mediumImpact();
+        });
+        return;
+      }
+
+      String result = 'Status: Valid ✓\n\n';
       result += 'Scheme: ${uri.scheme}\n';
       result += 'Host: ${uri.host}\n';
-      result += 'Path: ${uri.path}\n';
+      if (uri.path.isNotEmpty) result += 'Path: ${uri.path}\n';
       if (uri.hasQuery) result += 'Query: ${uri.query}\n';
       if (uri.hasFragment) result += 'Fragment: ${uri.fragment}\n';
       if (uri.hasPort) result += 'Port: ${uri.port}\n';
@@ -52,7 +75,7 @@ class _UrlValidatorToolState extends State<UrlValidatorTool> {
     } catch (e) {
       setState(() {
         _outputController.text =
-            'Status: Invalid\n\nReason: Malformed URL or missing scheme (e.g., https://)';
+            'Status: Invalid\n\nReason: Malformed URL format';
         HapticFeedback.mediumImpact();
       });
     }

@@ -1,3 +1,4 @@
+import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
@@ -73,15 +74,10 @@ class _GradientGeneratorToolState extends State<GradientGeneratorTool> {
   }
 
   void _randomize() {
+    final random = Random();
     setState(() {
-      _color1 = Color(
-        (0xFF000000 + (0xFFFFFF * DateTime.now().millisecond / 1000).round())
-            .toInt(),
-      ).withOpacity(1.0);
-      _color2 = Color(
-        (0xFF000000 + (0xFFFFFF * DateTime.now().microsecond / 1000).round())
-            .toInt(),
-      ).withOpacity(1.0);
+      _color1 = Color(0xFF000000 | random.nextInt(0xFFFFFF));
+      _color2 = Color(0xFF000000 | random.nextInt(0xFFFFFF));
       _hex1Controller.text = _toHex(_color1);
       _hex2Controller.text = _toHex(_color2);
       _updateCode();

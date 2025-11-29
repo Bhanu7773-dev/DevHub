@@ -19,6 +19,12 @@ class _IpInfoToolState extends State<IpInfoTool> {
   final TextEditingController _outputController = TextEditingController();
   bool _loading = false;
 
+  @override
+  void dispose() {
+    _outputController.dispose();
+    super.dispose();
+  }
+
   void _getIpInfo() async {
     setState(() => _loading = true);
     try {

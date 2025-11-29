@@ -50,7 +50,16 @@ class _HtmlEncoderToolState extends State<HtmlEncoderTool> {
   void _decode() {
     setState(() {
       String result = _inputController.text;
-      _htmlEntities.forEach((char, entity) {
+      // Decode in reverse order - &amp; must be decoded LAST
+      // to avoid double-decoding issues like &amp;lt; -> &lt; -> <
+      final reverseEntities = {
+        '&#39;': "'",
+        '&quot;': '"',
+        '&gt;': '>',
+        '&lt;': '<',
+        '&amp;': '&',
+      };
+      reverseEntities.forEach((entity, char) {
         result = result.replaceAll(entity, char);
       });
       _outputController.text = result;

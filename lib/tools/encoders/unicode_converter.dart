@@ -31,9 +31,15 @@ class _UnicodeConverterToolState extends State<UnicodeConverterTool> {
   void _toUnicode() {
     setState(() {
       final text = _inputController.text;
-      final result = text.runes
-          .map((r) => '\\u${r.toRadixString(16).padLeft(4, '0')}')
-          .join();
+      // Use \u{XXXX} format for all characters (supports full Unicode range including emojis)
+      final result = text.runes.map((r) {
+        if (r <= 0xFFFF) {
+          return '\\u${r.toRadixString(16).padLeft(4, '0').toUpperCase()}';
+        } else {
+          // For characters beyond BMP (like emojis), use \u{XXXXX} format
+          return '\\u{${r.toRadixString(16).toUpperCase()}}';
+        }
+      }).join();
       _outputController.text = result;
       HapticFeedback.mediumImpact();
     });
@@ -42,8 +48,13 @@ class _UnicodeConverterToolState extends State<UnicodeConverterTool> {
   void _fromUnicode() {
     setState(() {
       try {
-        final input = _inputController.text;
-        final result = input.replaceAllMapped(
+        String input = _inputController.text;
+        // Handle both \uXXXX and \u{XXXXX} formats
+        String result = input.replaceAllMapped(
+          RegExp(r'\\u\{([0-9a-fA-F]+)\}'),
+          (match) => String.fromCharCode(int.parse(match.group(1)!, radix: 16)),
+        );
+        result = result.replaceAllMapped(
           RegExp(r'\\u([0-9a-fA-F]{4})'),
           (match) => String.fromCharCode(int.parse(match.group(1)!, radix: 16)),
         );

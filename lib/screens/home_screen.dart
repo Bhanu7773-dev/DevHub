@@ -416,28 +416,40 @@ class _HomeScreenState extends State<HomeScreen> {
             return LayoutBuilder(
               builder: (context, constraints) {
                 // Calculate number of columns based on available width
-                // Aim for cards around 150-180px wide
                 final width = constraints.maxWidth;
                 int crossAxisCount;
+                double spacing;
+                double aspectRatio;
+                
                 if (width > 1200) {
                   crossAxisCount = 6;
+                  spacing = 16;
+                  aspectRatio = 1.0;
                 } else if (width > 900) {
                   crossAxisCount = 5;
+                  spacing = 14;
+                  aspectRatio = 1.0;
                 } else if (width > 600) {
                   crossAxisCount = 4;
+                  spacing = 12;
+                  aspectRatio = 1.0;
                 } else if (width > 400) {
                   crossAxisCount = 3;
+                  spacing = 10;
+                  aspectRatio = 0.9;
                 } else {
-                  crossAxisCount = 2;
+                  crossAxisCount = 3;  // 3 columns on small phones too
+                  spacing = 8;
+                  aspectRatio = 0.85;
                 }
 
                 return GridView.builder(
-                  padding: const EdgeInsets.all(20),
+                  padding: EdgeInsets.all(width > 600 ? 20 : 12),
                   gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                     crossAxisCount: crossAxisCount,
-                    crossAxisSpacing: 16,
-                    mainAxisSpacing: 16,
-                    childAspectRatio: 1.0,
+                    crossAxisSpacing: spacing,
+                    mainAxisSpacing: spacing,
+                    childAspectRatio: aspectRatio,
                   ),
                   itemCount: _filteredTools.length,
                   itemBuilder: (context, index) {
@@ -453,7 +465,17 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildToolCard(Tool tool, int index) {
-    return Card(
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        // Adjust sizes based on card size
+        final cardHeight = constraints.maxHeight;
+        final isCompact = cardHeight < 120;
+        final iconSize = isCompact ? 18.0 : 24.0;
+        final iconPadding = isCompact ? 6.0 : 8.0;
+        final titleSize = isCompact ? 10.0 : 12.0;
+        final cardPadding = isCompact ? 4.0 : 8.0;
+        
+        return Card(
           child: InkWell(
             onTap: () {
               HistoryService().addToHistory(tool.id);
@@ -480,53 +502,47 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
               );
             },
-            borderRadius: BorderRadius.circular(16),
-            child: Container(
-              padding: const EdgeInsets.all(10),
+            borderRadius: BorderRadius.circular(12),
+            child: Padding(
+              padding: EdgeInsets.all(cardPadding),
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
+                mainAxisSize: MainAxisSize.min,
                 children: [
                   Hero(
                     tag: 'tool_icon_${tool.id}',
                     child: Container(
-                      padding: const EdgeInsets.all(10),
+                      padding: EdgeInsets.all(iconPadding),
                       decoration: BoxDecoration(
                         gradient: AppTheme.primaryGradient,
-                        borderRadius: BorderRadius.circular(12),
+                        borderRadius: BorderRadius.circular(8),
                       ),
                       child: Text(
                         tool.icon,
-                        style: const TextStyle(fontSize: 26),
+                        style: TextStyle(fontSize: iconSize),
                       ),
                     ),
                   ),
-                  const SizedBox(height: 6),
-                  Text(
-                    tool.name,
-                    textAlign: TextAlign.center,
-                    style: Theme.of(
-                      context,
-                    ).textTheme.titleMedium?.copyWith(fontSize: 14),
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    tool.description,
-                    textAlign: TextAlign.center,
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: Colors.white54,
-                      fontSize: 11,
+                  const SizedBox(height: 4),
+                  Flexible(
+                    child: Text(
+                      tool.name,
+                      textAlign: TextAlign.center,
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        fontSize: titleSize,
+                        height: 1.1,
+                      ),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
                     ),
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
                   ),
                 ],
               ),
             ),
           ),
-        )
-        .animate()
+        );
+      },
+    ).animate()
         .fadeIn(delay: (index * 20).ms, duration: 300.ms)
         .scale(begin: const Offset(0.8, 0.8));
   }

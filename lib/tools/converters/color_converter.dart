@@ -32,7 +32,17 @@ class _ColorConverterToolState extends State<ColorConverterTool> {
 
   void _convertFromHex() {
     try {
-      final hex = _hexController.text.replaceAll('#', '');
+      String hex = _hexController.text.replaceAll('#', '').toUpperCase();
+      
+      // Support 3-character hex codes (e.g., #F00 -> #FF0000)
+      if (hex.length == 3) {
+        hex = hex.split('').map((c) => '$c$c').join();
+      }
+      
+      if (hex.length != 6) {
+        throw FormatException('Invalid hex length');
+      }
+      
       final color = Color(int.parse('FF$hex', radix: 16));
       setState(() {
         _currentColor = color;
@@ -43,7 +53,7 @@ class _ColorConverterToolState extends State<ColorConverterTool> {
     } catch (e) {
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(const SnackBar(content: Text('Invalid HEX color')));
+      ).showSnackBar(const SnackBar(content: Text('Invalid HEX color (use #RGB or #RRGGBB)')));
     }
   }
 

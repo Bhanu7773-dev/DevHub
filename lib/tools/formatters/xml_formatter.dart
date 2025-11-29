@@ -38,12 +38,16 @@ class _XmlFormatterToolState extends State<XmlFormatterTool> {
 
     for (final line in lines) {
       final trimmed = line.trim();
+      if (trimmed.isEmpty) continue;
       if (trimmed.startsWith('</')) indent--;
       result += '  ' * indent + trimmed + '\n';
       if (trimmed.startsWith('<') &&
           !trimmed.startsWith('</') &&
-          !trimmed.endsWith('/>'))
+          !trimmed.startsWith('<?') &&
+          !trimmed.endsWith('/>') &&
+          !trimmed.contains('</')) {
         indent++;
+      }
     }
 
     setState(() {

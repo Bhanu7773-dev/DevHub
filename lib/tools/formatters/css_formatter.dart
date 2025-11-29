@@ -50,7 +50,10 @@ class _CssFormatterToolState extends State<CssFormatterTool> {
 
     final result = input
         .replaceAll(RegExp(r'\s+'), ' ')
-        .replaceAll(RegExp(r'\s*([{}:;,])\s*'), r'\1');
+        .replaceAllMapped(
+          RegExp(r'\s*([{}:;,])\s*'),
+          (match) => match.group(1)!,
+        );
 
     setState(() {
       _outputController.text = result;
